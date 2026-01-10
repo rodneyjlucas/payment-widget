@@ -6,6 +6,9 @@ node_modules/
 .env.local
 .env.*.local
 
+# AI Agent configs
+.claude
+
 # Build output
 dist/
 build/
