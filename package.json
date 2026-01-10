@@ -1,0 +1,17 @@
+{
+  "name": "jwt-payment-flow",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "npm-run-all2 --parallel dev:*",
+    "dev:client": "npm run dev --prefix client",
+    "dev:server": "npm run dev --prefix server",
+    "install:all": "npm install && npm install --prefix client && npm install --prefix server",
+    "test": "node test-flow.js"
+  },
+  "devDependencies": {
+    "dotenv": "^17.2.3",
+    "jose": "^5.9.6",
+    "npm-run-all2": "^7.0.2"
+  }
+}
