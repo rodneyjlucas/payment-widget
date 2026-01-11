@@ -34,10 +34,18 @@ body {
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
 }
 
-.payment-form h2 {
-  margin-top: 0;
-  margin-bottom: 0.5rem;
+.payment-form fieldset {
+  border: none;
+  margin: 0;
+  padding: 0;
+}
+
+.payment-form legend {
+  font-size: 1.5rem;
+  font-weight: 600;
   text-align: center;
+  width: 100%;
+  margin-bottom: 1.5rem;
 }
 
 .payment-form .subtitle {
@@ -56,7 +64,7 @@ body {
   display: block;
   margin-bottom: 0.5rem;
   font-size: 0.9rem;
-  color: #888;
+  color: #a3a3a3;
 }
 
 .form-group input {
@@ -71,7 +79,8 @@ body {
 }
 
 .form-group input:focus {
-  outline: none;
+  outline: 2px solid #646cff;
+  outline-offset: 2px;
   border-color: #646cff;
 }
 
@@ -110,8 +119,19 @@ button[type="submit"] {
   transition: background 0.2s;
 }
 
-button[type="submit"]:hover {
+button[type="submit"]:hover:not(:disabled) {
   background: #535bf2;
+}
+
+button[type="submit"]:focus {
+  outline: 2px solid #646cff;
+  outline-offset: 2px;
+}
+
+button[type="submit"]:disabled {
+  background: #4a4a4a;
+  color: #888;
+  cursor: not-allowed;
 }
 
 .result {
