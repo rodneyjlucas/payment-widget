@@ -19,34 +19,37 @@ export function PaymentForm(onSubmit, amount) {
   const form = document.createElement('form');
   form.className = 'payment-form';
   form.innerHTML = `
-    <h2>Payment Form</h2>
-    <div class="form-group">
-      <label for="cardNumber">Card Number</label>
-      <input type="text" id="cardNumber" name="cardNumber" required placeholder="4111 1111 1111 1111" maxlength="19">
-    </div>
+    <fieldset>
+      <legend>Payment Details</legend>
 
-    <div class="form-row">
       <div class="form-group">
-        <label for="expirationDate">Expiration Date</label>
-        <input type="text" id="expirationDate" name="expirationDate" required placeholder="MM/YY" maxlength="5">
+        <label for="cardNumber">Card Number</label>
+        <input type="text" id="cardNumber" name="cardNumber" required placeholder="4111 1111 1111 1111" maxlength="19" inputmode="numeric" autocomplete="cc-number">
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="expirationDate">Expiration Date</label>
+          <input type="text" id="expirationDate" name="expirationDate" required placeholder="MM/YY" maxlength="5" inputmode="numeric" autocomplete="cc-exp">
+        </div>
+
+        <div class="form-group">
+          <label for="cvv">CVV</label>
+          <input type="text" id="cvv" name="cvv" required placeholder="123" maxlength="4" inputmode="numeric" autocomplete="cc-csc">
+        </div>
       </div>
 
       <div class="form-group">
-        <label for="cvv">CVV</label>
-        <input type="text" id="cvv" name="cvv" required placeholder="123" maxlength="4">
+        <label for="postalCode">Postal Code</label>
+        <input type="text" id="postalCode" name="postalCode" required placeholder="12345" maxlength="5" inputmode="numeric" autocomplete="postal-code">
       </div>
-    </div>
 
-    <div class="form-group">
-      <label for="postalCode">Postal Code</label>
-      <input type="text" id="postalCode" name="postalCode" required placeholder="12345" maxlength="5"  inputmode="numeric">
-    </div>
+      <input type="hidden" name="amount" value="${amount}">
 
-    <input type="hidden" name="amount" value="${amount}">
+      <button type="submit">Pay $${amount.toFixed(2)}</button>
+    </fieldset>
 
-    <button type="submit">Pay $${amount.toFixed(2)}</button>
-
-    <div id="result" class="result"></div>
+    <div id="result" class="result" role="status" aria-live="polite"></div>
   `;
 
   const resultDiv = form.querySelector('#result');
@@ -54,6 +57,7 @@ export function PaymentForm(onSubmit, amount) {
   const expirationDateInput = form.querySelector('#expirationDate');
   const cvvInput = form.querySelector('#cvv');
   const postalCodeInput = form.querySelector('#postalCode');
+  const submitButton = form.querySelector('button[type="submit"]');
 
   /**
    * Show error message for a form field
@@ -168,6 +172,8 @@ export function PaymentForm(onSubmit, amount) {
       amount: parseFloat(formData.get('amount'))
     };
 
+    submitButton.disabled = true;
+    submitButton.setAttribute('aria-busy', 'true');
     resultDiv.className = 'result';
     resultDiv.textContent = 'Processing...';
 
@@ -189,6 +195,9 @@ export function PaymentForm(onSubmit, amount) {
     } catch (error) {
       resultDiv.className = 'result error';
       resultDiv.textContent = `Error: ${error.message}`;
+    } finally {
+      submitButton.disabled = false;
+      submitButton.removeAttribute('aria-busy');
     }
   }
 
