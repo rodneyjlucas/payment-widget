@@ -28,10 +28,55 @@ body {
 }
 
 .payment-form {
-  background: #1a1a1a;
-  padding: 2rem;
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  /* Colors */
+  --pf-bg: #1a1a1a;
+  --pf-text: rgba(255, 255, 255, 0.87);
+  --pf-text-muted: #a3a3a3;
+  --pf-border: #333;
+  --pf-input-bg: #2a2a2a;
+  --pf-primary: #646cff;
+  --pf-primary-hover: #535bf2;
+  --pf-error: #f87171;
+  --pf-error-bg: #4d1a1a;
+  --pf-success: #4ade80;
+  --pf-success-bg: #1a4d1a;
+  --pf-disabled-bg: #4a4a4a;
+  --pf-disabled-text: #888;
+
+  /* Typography */
+  --pf-font-family: inherit;
+  --pf-font-size: 1rem;
+  --pf-font-size-sm: 0.9rem;
+  --pf-font-size-xs: 0.8rem;
+  --pf-font-size-lg: 1.5rem;
+  --pf-font-weight: 400;
+  --pf-font-weight-bold: 600;
+
+  /* Spacing */
+  --pf-padding: 2rem;
+  --pf-gap: 1rem;
+  --pf-input-padding: 0.75rem;
+
+  /* Borders */
+  --pf-border-radius: 12px;
+  --pf-border-radius-sm: 6px;
+  --pf-border-width: 1px;
+  --pf-focus-outline: 2px solid var(--pf-primary);
+  --pf-focus-offset: 2px;
+
+  /* Shadows */
+  --pf-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+
+  /* Transitions */
+  --pf-transition: 0.2s;
+
+  /* Apply styles */
+  background: var(--pf-bg);
+  color: var(--pf-text);
+  font-family: var(--pf-font-family);
+  padding: var(--pf-padding);
+  border-radius: var(--pf-border-radius);
+  box-shadow: var(--pf-shadow);
 }
 
 .payment-form fieldset {
@@ -41,103 +86,105 @@ body {
 }
 
 .payment-form legend {
-  font-size: 1.5rem;
-  font-weight: 600;
+  font-size: var(--pf-font-size-lg);
+  font-weight: var(--pf-font-weight-bold);
   text-align: center;
   width: 100%;
-  margin-bottom: 1.5rem;
+  margin-bottom: var(--pf-gap);
 }
 
 .payment-form .subtitle {
   text-align: center;
-  color: #888;
+  color: var(--pf-text-muted);
   margin-top: 0;
-  margin-bottom: 1.5rem;
-  font-size: 0.85rem;
+  margin-bottom: var(--pf-gap);
+  font-size: var(--pf-font-size-sm);
 }
 
 .form-group {
-  margin-bottom: 1rem;
+  margin-bottom: var(--pf-gap);
 }
 
 .form-group label {
   display: block;
   margin-bottom: 0.5rem;
-  font-size: 0.9rem;
-  color: #a3a3a3;
+  font-size: var(--pf-font-size-sm);
+  color: var(--pf-text-muted);
 }
 
 .form-group input {
   width: 100%;
-  padding: 0.75rem;
-  border: 1px solid #333;
-  border-radius: 6px;
-  background: #2a2a2a;
+  padding: var(--pf-input-padding);
+  border: var(--pf-border-width) solid var(--pf-border);
+  border-radius: var(--pf-border-radius-sm);
+  background: var(--pf-input-bg);
   color: inherit;
-  font-size: 1rem;
+  font-family: inherit;
+  font-size: var(--pf-font-size);
   box-sizing: border-box;
 }
 
 .form-group input:focus {
-  outline: 2px solid #646cff;
-  outline-offset: 2px;
-  border-color: #646cff;
+  outline: var(--pf-focus-outline);
+  outline-offset: var(--pf-focus-offset);
+  border-color: var(--pf-primary);
 }
 
 .form-group.has-error input,
 .form-group input.input-error {
-  border-color: #f87171;
+  border-color: var(--pf-error);
 }
 
 .form-group .error-message {
   display: block;
-  color: #f87171;
-  font-size: 0.8rem;
+  color: var(--pf-error);
+  font-size: var(--pf-font-size-xs);
   margin-top: 0.25rem;
 }
 
 .form-row {
   display: flex;
-  gap: 1rem;
+  gap: var(--pf-gap);
 }
 
 .form-row .form-group {
   flex: 1;
 }
 
-button[type="submit"] {
+.payment-form button[type="submit"] {
   width: 100%;
-  padding: 1rem;
-  margin-top: 1rem;
+  padding: var(--pf-gap);
+  margin-top: var(--pf-gap);
   border: none;
-  border-radius: 6px;
-  background: #646cff;
+  border-radius: var(--pf-border-radius-sm);
+  background: var(--pf-primary);
   color: white;
-  font-size: 1rem;
-  font-weight: 600;
+  font-family: inherit;
+  font-size: var(--pf-font-size);
+  font-weight: var(--pf-font-weight-bold);
   cursor: pointer;
-  transition: background 0.2s;
+  transition: background var(--pf-transition);
 }
 
-button[type="submit"]:hover:not(:disabled) {
-  background: #535bf2;
+.payment-form button[type="submit"]:hover:not(:disabled) {
+  background: var(--pf-primary-hover);
 }
 
-button[type="submit"]:focus {
-  outline: 2px solid #646cff;
-  outline-offset: 2px;
+.payment-form button[type="submit"]:focus {
+  outline: var(--pf-focus-outline);
+  outline-offset: var(--pf-focus-offset);
 }
 
-button[type="submit"]:disabled {
-  background: #4a4a4a;
-  color: #888;
+.payment-form button[type="submit"]:disabled {
+  background: var(--pf-disabled-bg);
+  color: var(--pf-disabled-text);
   cursor: not-allowed;
 }
 
 .result {
-  margin-top: 1rem;
-  padding: 1rem;
-  border-radius: 6px;
+  margin-top: var(--pf-gap);
+  padding: var(--pf-gap);
+  border-radius: var(--pf-border-radius-sm);
   text-align: center;
   min-height: 1.5rem;
 }
@@ -147,28 +194,44 @@ button[type="submit"]:disabled {
 }
 
 .result.success {
-  background: #1a4d1a;
-  color: #4ade80;
+  background: var(--pf-success-bg);
+  color: var(--pf-success);
 }
 
 .result.error {
-  background: #4d1a1a;
-  color: #f87171;
+  background: var(--pf-error-bg);
+  color: var(--pf-error);
+}
+
+/* Light theme preset */
+.payment-form.light {
+  --pf-bg: #ffffff;
+  --pf-text: #213547;
+  --pf-text-muted: #6b7280;
+  --pf-border: #d1d5db;
+  --pf-input-bg: #f9fafb;
+  --pf-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  --pf-error-bg: #fef2f2;
+  --pf-success-bg: #f0fdf4;
+}
+
+/* Minimal theme preset */
+.payment-form.minimal {
+  --pf-bg: transparent;
+  --pf-shadow: none;
+  --pf-border-radius: 0;
+  --pf-padding: 0;
 }
 
 @media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
-  }
-
-  .payment-form {
-    background: #f9f9f9;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-  }
-
-  .form-group input {
-    background: white;
-    border-color: #ddd;
+  .payment-form:not(.dark) {
+    --pf-bg: #f9f9f9;
+    --pf-text: #213547;
+    --pf-text-muted: #6b7280;
+    --pf-border: #ddd;
+    --pf-input-bg: white;
+    --pf-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    --pf-error-bg: #fef2f2;
+    --pf-success-bg: #f0fdf4;
   }
 }
