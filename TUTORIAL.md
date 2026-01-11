@@ -47,7 +47,7 @@ This dual-token approach provides both **authentication** (proving who you are) 
          │  3. Encrypt payload with ENCRYPT_PUBLIC_KEY │
          │     (creates JWE)                           │
          │                                             │
-         │  4. POST /api/submit                        │
+         │  4. POST /api/payment                       │
          │     Authorization: Bearer <JWS>             │
          │     { payload_jwe: "<JWE>" }                │
          │ ──────────────────────────────────────────► │
@@ -97,7 +97,11 @@ jwt-payment-flow/
 ├── .env                      # RSA key pairs (base64 encoded)
 ├── package.json              # Root package with npm-run-all2
 ├── test-flow.js              # End-to-end test script
+├── README.md                 # Quick start and configuration
 ├── TUTORIAL.md               # This file
+│
+├── docs/
+│   └── SYSTEM_DESIGN.md      # Detailed architecture documentation
 │
 ├── client/                   # Vite vanilla JS application
 │   ├── package.json
@@ -105,16 +109,23 @@ jwt-payment-flow/
 │   ├── index.html
 │   └── src/
 │       ├── main.js           # Entry point
-│       ├── PaymentForm.js    # UI component
-│       ├── api.js            # API client (auth + submit)
+│       ├── PaymentForm.js    # UI component with theming
+│       ├── api.js            # API client (auth + payment)
 │       ├── jwt.js            # JWE encryption
-│       └── style.css
+│       ├── validators.js     # Input formatting & validation
+│       ├── validators.test.js# Validator unit tests
+│       └── style.css         # Styles with theme support
 │
 └── server/                   # Express API server
     ├── package.json
+    ├── vitest.config.js      # Test configuration
+    ├── vitest.setup.js       # Test setup (env loading)
     └── src/
-        ├── index.js          # Express routes
-        └── jwt.js            # JWS signing/verification, JWE decryption
+        ├── index.js          # Entry point, starts server
+        ├── app.js            # Express routes (extracted for testing)
+        ├── jwt.js            # JWS signing/verification, JWE decryption
+        ├── jwt.test.js       # JWT utility unit tests
+        └── api.test.js       # API endpoint tests
 ```
 
 ---
@@ -219,7 +230,7 @@ export async function encryptPayload(payload) {
 
 ```javascript
 // client/src/api.js
-const response = await fetch(`${API_URL}/api/submit`, {
+const response = await fetch(`${API_URL}/api/payment`, {
   method: 'POST',
   headers: {
     'Content-Type': 'application/json',
@@ -278,10 +289,21 @@ ENCRYPT_PUBLIC_KEY=<base64 encoded PEM>  # Client encrypts payloads
 SERVER_PORT=3001
 ```
 
-### Server Authentication Endpoint
+### Server Application (app.js)
+
+The Express routes are defined in `app.js` and exported for testing:
 
 ```javascript
-// server/src/index.js
+// server/src/app.js
+import cors from 'cors';
+import express from 'express';
+import { decryptPayload, issueAuthToken, verifyAuthToken } from './jwt.js';
+
+const app = express();
+app.use(cors());
+app.use(express.json());
+
+// Auth endpoint - issues JWS token
 app.post('/api/auth', async (req, res) => {
   const { clientId } = req.body;
 
@@ -300,13 +322,9 @@ app.post('/api/auth', async (req, res) => {
     expiresIn: 300  // 5 minutes
   });
 });
-```
 
-### Server Payment Endpoint
-
-```javascript
-// server/src/index.js
-app.post('/api/submit', async (req, res) => {
+// Payment endpoint - verifies auth, decrypts payload
+app.post('/api/payment', async (req, res) => {
   // 1. Extract and verify auth token
   const authHeader = req.headers.authorization;
   if (!authHeader?.startsWith('Bearer ')) {
@@ -321,44 +339,127 @@ app.post('/api/submit', async (req, res) => {
 
   // 2. Decrypt the JWE payload
   const { payload_jwe } = req.body;
+  if (!payload_jwe) {
+    return res.status(400).json({
+      success: false,
+      error: 'payload_jwe is required'
+    });
+  }
+
   const paymentData = await decryptPayload(payload_jwe);
 
   // 3. Process payment
   const result = {
     success: true,
+    message: 'Payment processed successfully',
     transactionId: crypto.randomUUID(),
     amount: paymentData.amount,
-    clientId: authPayload.clientId
+    clientId: authPayload.clientId,
+    timestamp: new Date().toISOString()
   };
 
   res.json(result);
 });
+
+export default app;
 ```
 
 ### Client Payment Form Component
 
+The PaymentForm component supports theming and configuration:
+
 ```javascript
 // client/src/PaymentForm.js
-export function PaymentForm(onSubmit) {
-  const form = document.createElement('form');
-  // ... form HTML ...
+export function PaymentForm(onSubmit, amount, config = {}) {
+  const {
+    theme = '',        // 'dark', 'light', or 'minimal'
+    className = '',
+    styles = {},       // CSS custom property overrides
+    labels = {},       // Custom label text
+    placeholders = {}  // Custom placeholder text
+  } = config;
 
-  form.addEventListener('submit', async (e) => {
+  const form = document.createElement('form');
+  form.className = ['payment-form', theme, className].filter(Boolean).join(' ');
+
+  // Apply custom styles via CSS custom properties
+  Object.entries(styles).forEach(([prop, value]) => {
+    form.style.setProperty(`--pf-${prop}`, value);
+  });
+
+  // ... form HTML with merged labels and placeholders ...
+
+  async function handleSubmit(e) {
     e.preventDefault();
+    clearAllErrors();
+
+    // Validate all fields
+    const cardNumberError = validateCardNumber(cardNumber);
+    if (cardNumberError.valid !== true) {
+      showError(cardNumberInput, cardNumberError.message);
+      hasErrors = true;
+    }
+    // ... more validation ...
+
+    if (hasErrors) return;
 
     const paymentData = {
-      cardHolder: formData.get('cardHolder'),
-      cardNumber: formData.get('cardNumber'),
-      expiry: formData.get('expiry'),
-      cvv: formData.get('cvv'),
+      cardNumber,
+      expirationDate,
+      cvv,
+      postalCode,
       amount: parseFloat(formData.get('amount'))
     };
 
-    // onSubmit is passed as parameter (submitPayment from api.js)
     const result = await onSubmit(paymentData);
-  });
+    // Display result...
+  }
 
+  form.addEventListener('submit', handleSubmit);
   return form;
+}
+```
+
+### Client Input Validation
+
+The validators module provides formatting and validation:
+
+```javascript
+// client/src/validators.js
+
+// Format card number with spaces: "4111111111111111" -> "4111 1111 1111 1111"
+export function formatCardNumber(value) {
+  const digits = value.replace(/\D/g, '');
+  const groups = digits.match(/.{1,4}/g) || [];
+  return groups.join(' ').substring(0, 19);
+}
+
+// Validate card number using Luhn algorithm
+export function validateCardNumber(cardNumber) {
+  const cleaned = cardNumber.replace(/\s/g, '');
+
+  if (!/^\d{13,19}$/.test(cleaned)) {
+    return { valid: false, message: 'Card number must be 13-19 digits' };
+  }
+
+  // Luhn algorithm
+  let sum = 0;
+  let isEven = false;
+
+  for (let i = cleaned.length - 1; i >= 0; i--) {
+    let digit = parseInt(cleaned.charAt(i), 10);
+
+    if (isEven) {
+      digit *= 2;
+      if (digit > 9) digit -= 9;
+    }
+
+    sum += digit;
+    isEven = !isEven;
+  }
+
+  const valid = sum % 10 === 0;
+  return { valid, message: valid ? '' : 'Invalid card number' };
 }
 ```
 
@@ -366,6 +467,8 @@ export function PaymentForm(onSubmit) {
 
 ```javascript
 // client/src/api.js
+let authToken = null;
+
 export async function submitPayment(paymentData) {
   // 1. Get auth token if needed
   if (!authToken) {
@@ -376,7 +479,7 @@ export async function submitPayment(paymentData) {
   const payload_jwe = await encryptPayload(paymentData);
 
   // 3. Submit with auth + encrypted payload
-  const response = await fetch(`${API_URL}/api/submit`, {
+  const response = await fetch(`${API_URL}/api/payment`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -385,7 +488,15 @@ export async function submitPayment(paymentData) {
     body: JSON.stringify({ payload_jwe })
   });
 
-  return response.json();
+  const result = await response.json();
+
+  // Clear token on auth failure for retry
+  if (response.status === 401) {
+    authToken = null;
+    throw new Error(result.error || 'Authentication failed');
+  }
+
+  return result;
 }
 ```
 
@@ -401,43 +512,67 @@ export async function submitPayment(paymentData) {
 ### Installation
 
 ```bash
-# Install all dependencies (root, client, server)
-npm run install:all
+# Install root dependencies
+npm install
+
+# Install client dependencies
+cd client && npm install
+
+# Install server dependencies
+cd ../server && npm install
 ```
 
 ### Development
 
 ```bash
-# Start both client and server concurrently
-npm run dev
+# Terminal 1: Start server
+cd server && npm run dev
+
+# Terminal 2: Start client
+cd client && npm run dev
 ```
 
 This starts:
 - **Client**: http://localhost:5173 (Vite dev server)
 - **Server**: http://localhost:3001 (Express API)
 
-### Individual Commands
-
-```bash
-# Start only the server
-npm run dev:server
-
-# Start only the client
-npm run dev:client
-```
-
 ---
 
 ## Testing
+
+### Unit Tests
+
+Both client and server include comprehensive unit tests using Vitest.
+
+**Client tests:**
+```bash
+cd client && npm test
+```
+
+Tests the validators module:
+- Input formatting functions (card number, expiration, CVV, postal code)
+- Luhn algorithm validation
+- Date expiration logic
+- Edge cases
+
+**Server tests:**
+```bash
+cd server && npm test
+```
+
+Tests include:
+- **JWT utilities**: Token issuance, verification, expiration, tampering detection
+- **API endpoints**: Auth and payment validation, error handling
+- **Integration**: Full auth → payment flow
 
 ### End-to-End Test
 
 ```bash
 # Start the server first
-npm run dev:server
+cd server && npm run dev
 
 # In another terminal, run the test
-npm test
+node test-flow.js
 ```
 
 ### Expected Output
@@ -489,8 +624,10 @@ This project demonstrates:
 1. **Separation of concerns**: Authentication (JWS) vs encryption (JWE)
 2. **Asymmetric cryptography**: Public/private key pairs for security
 3. **Short-lived tokens**: 5-minute expiration reduces risk
-4. **Component architecture**: UI receives submit function as parameter
-5. **Environment-based secrets**: Keys loaded from `.env`
-6. **Modern JavaScript**: ES modules, async/await, jose library
+4. **Testable architecture**: Express app extracted for unit testing
+5. **Input validation**: Luhn algorithm and formatting on client
+6. **Theming support**: Configurable payment form appearance
+7. **Environment-based secrets**: Keys loaded from `.env`
+8. **Modern JavaScript**: ES modules, async/await, jose library
 
 The pattern is suitable for any scenario requiring both authenticated and encrypted API communication.
