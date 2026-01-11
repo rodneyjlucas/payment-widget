@@ -10,43 +10,91 @@ import {
 } from './validators.js';
 
 /**
+ * @typedef {Object} PaymentFormConfig
+ * @property {string} [theme] - Theme preset: 'dark', 'light', or 'minimal'
+ * @property {string} [className] - Additional CSS class names
+ * @property {Object} [styles] - CSS custom property overrides (without --pf- prefix)
+ * @property {Object} [labels] - Custom label text
+ * @property {string} [labels.legend] - Legend text
+ * @property {string} [labels.cardNumber] - Card number label
+ * @property {string} [labels.expirationDate] - Expiration date label
+ * @property {string} [labels.cvv] - CVV label
+ * @property {string} [labels.postalCode] - Postal code label
+ * @property {string} [labels.submit] - Submit button text
+ * @property {Object} [placeholders] - Custom placeholder text
+ */
+
+/**
  * Payment Form UI Component
  * @param {Function} onSubmit - Submit handler function that receives form data
  * @param {number} amount - The payment amount
+ * @param {PaymentFormConfig} [config] - Configuration options
  * @returns {HTMLElement} - The form element
  */
-export function PaymentForm(onSubmit, amount) {
+export function PaymentForm(onSubmit, amount, config = {}) {
+  const {
+    theme = '',
+    className = '',
+    styles = {},
+    labels = {},
+    placeholders = {}
+  } = config;
+
+  const mergedLabels = {
+    legend: 'Payment Details',
+    cardNumber: 'Card Number',
+    expirationDate: 'Expiration Date',
+    cvv: 'CVV',
+    postalCode: 'Postal Code',
+    submit: `Pay $${amount.toFixed(2)}`,
+    ...labels
+  };
+
+  const mergedPlaceholders = {
+    cardNumber: '4111 1111 1111 1111',
+    expirationDate: 'MM/YY',
+    cvv: '123',
+    postalCode: '12345',
+    ...placeholders
+  };
+
   const form = document.createElement('form');
-  form.className = 'payment-form';
+  form.className = ['payment-form', theme, className].filter(Boolean).join(' ');
+
+  // Apply custom style overrides via CSS custom properties
+  Object.entries(styles).forEach(([prop, value]) => {
+    form.style.setProperty(`--pf-${prop}`, value);
+  });
+
   form.innerHTML = `
     <fieldset>
-      <legend>Payment Details</legend>
+      <legend>${mergedLabels.legend}</legend>
 
       <div class="form-group">
-        <label for="cardNumber">Card Number</label>
-        <input type="text" id="cardNumber" name="cardNumber" required placeholder="4111 1111 1111 1111" maxlength="19" inputmode="numeric" autocomplete="cc-number">
+        <label for="cardNumber">${mergedLabels.cardNumber}</label>
+        <input type="text" id="cardNumber" name="cardNumber" required placeholder="${mergedPlaceholders.cardNumber}" maxlength="19" inputmode="numeric" autocomplete="cc-number">
       </div>
 
       <div class="form-row">
         <div class="form-group">
-          <label for="expirationDate">Expiration Date</label>
-          <input type="text" id="expirationDate" name="expirationDate" required placeholder="MM/YY" maxlength="5" inputmode="numeric" autocomplete="cc-exp">
+          <label for="expirationDate">${mergedLabels.expirationDate}</label>
+          <input type="text" id="expirationDate" name="expirationDate" required placeholder="${mergedPlaceholders.expirationDate}" maxlength="5" inputmode="numeric" autocomplete="cc-exp">
         </div>
 
         <div class="form-group">
-          <label for="cvv">CVV</label>
-          <input type="text" id="cvv" name="cvv" required placeholder="123" maxlength="4" inputmode="numeric" autocomplete="cc-csc">
+          <label for="cvv">${mergedLabels.cvv}</label>
+          <input type="text" id="cvv" name="cvv" required placeholder="${mergedPlaceholders.cvv}" maxlength="4" inputmode="numeric" autocomplete="cc-csc">
         </div>
       </div>
 
       <div class="form-group">
-        <label for="postalCode">Postal Code</label>
-        <input type="text" id="postalCode" name="postalCode" required placeholder="12345" maxlength="5" inputmode="numeric" autocomplete="postal-code">
+        <label for="postalCode">${mergedLabels.postalCode}</label>
+        <input type="text" id="postalCode" name="postalCode" required placeholder="${mergedPlaceholders.postalCode}" maxlength="5" inputmode="numeric" autocomplete="postal-code">
       </div>
 
       <input type="hidden" name="amount" value="${amount}">
 
-      <button type="submit">Pay $${amount.toFixed(2)}</button>
+      <button type="submit">${mergedLabels.submit}</button>
     </fieldset>
 
     <div id="result" class="result" role="status" aria-live="polite"></div>
